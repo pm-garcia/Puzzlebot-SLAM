@@ -1,0 +1,8 @@
+prefix=/home/paul/mr_challenges/install
+
+Name: puzzlebot_sim
+Description: Description of puzzlebot_sim
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

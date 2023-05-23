@@ -1,0 +1,14 @@
+material aruco_tag_1
+{
+  technique
+  {
+    pass
+    {  
+      texture_unit
+      {
+        texture marker12.png
+      }
+    }
+  }
+}
+
