@@ -6,6 +6,7 @@ from geometry_msgs.msg import Pose2D
 from cv_bridge import CvBridge
 import cv2
 import numpy as np
+from std_msgs.msg import Int32
 
 class ArUcoDetectionNode:
     def __init__(self):
@@ -13,6 +14,7 @@ class ArUcoDetectionNode:
         self.image_sub = rospy.Subscriber('/camera/image_raw', Image, self.image_callback)
         self.camera_info_sub = rospy.Subscriber('/camera/camera_info', CameraInfo, self.camera_info_callback)
         self.pose_pub = rospy.Publisher('/aruco_pose', Pose2D, queue_size=10)
+        self.arucoid_pub = rospy.Publisher('/aruco_id', Int32, queue_size=10)
 
         self.camera_matrix = None
         self.dist_coeffs = None
@@ -49,6 +51,7 @@ class ArUcoDetectionNode:
                     distances.append(distance)
                 
                 closest_marker_idx = np.argmin(distances)
+                #print(ids[closest_marker_idx][0])
 
                 closest_corner = corners[closest_marker_idx]
                 rvecs, tvecs= cv2.aruco.estimatePoseSingleMarkers(closest_corner, 0.40, self.camera_matrix, self.dist_coeffs)
@@ -60,11 +63,15 @@ class ArUcoDetectionNode:
 
                 x = tvec[0][2]
                 y = tvec[0][0]
+                th = tvec[0][1]
+                #print(tvec)
 
                 pose_msg = Pose2D()
                 pose_msg.x = x
                 pose_msg.y = y
+                pose_msg.theta = th
                 self.pose_pub.publish(pose_msg)
+                self.arucoid_pub.publish(int(ids[closest_marker_idx][0]))
             
             if ids is not None:
                 # Dibujar los marcadores detectados en la imagen

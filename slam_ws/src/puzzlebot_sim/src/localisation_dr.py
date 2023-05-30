@@ -158,6 +158,7 @@ class LocalisationNode():
 
                 # Update covariance matrix
                 self.sigma = np.dot(np.dot(H, self.sigma), H.T) + Q
+                print(self.sigma)
 
                 self.pose_cov[0][0] = self.sigma[0][0]
                 self.pose_cov[0][1] = self.sigma[0][1]
