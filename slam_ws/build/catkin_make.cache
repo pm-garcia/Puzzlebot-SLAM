@@ -1,2 +1,0 @@
-puzzlebot_control:puzzlebot_gazebo:puzzlebot_rviz:puzzlebot_sim:puzzlebot_world
--DCATKIN_DEVEL_PREFIX=/home/paul/Puzzlebot_Projects/Puzzlebot-SLAM/slam_ws/devel -DCMAKE_INSTALL_PREFIX=/home/paul/Puzzlebot_Projects/Puzzlebot-SLAM/slam_ws/install -G Unix Makefiles
