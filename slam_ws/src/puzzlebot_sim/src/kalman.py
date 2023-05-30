@@ -8,8 +8,9 @@ import rospy, tf
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, Point, Quaternion, PoseWithCovariance,TwistWithCovariance, TransformStamped
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Int32
 from std_srvs.srv import Empty, EmptyResponse
+from geometry_msgs.msg import Pose2D
 
 R, L = 0.05, 0.18 # radius and distance between wheels
 FS = 90 # rate
@@ -19,12 +20,26 @@ STD_DEV = 0.001
 
 # Pose covariance gains
 Kl = 0.8
-Kr = 0.4
+Kr = 0.95
 
 class LocalisationNode():
     def __init__(self):
 
         rospy.init_node("localisation_deadreckoning")
+
+        #Subscribe to arucos pose topic
+        rospy.Subscriber("/aruco_id", Int32, self._aruco_callback)
+        self.aruco_id = None
+        self.m = {  18:{'x': 1, 'y': 2},
+                    12:{'x': 2, 'y': 5},
+                    5: {'x': -1, 'y': 9}}
+        self.M = []
+
+        rospy.Subscriber("/aruco_pose", Pose2D, self._aruco_pose_callback)
+        self.aruco_x = None
+        self.aruco_y = None
+        self.aruco_th
+
 
         # Subscribe to wheel angular velocity topics
         rospy.Subscriber("/wl", Float32, self._wl_callback)
@@ -63,6 +78,8 @@ class LocalisationNode():
 
         # Rate    
         self.rate = rospy.Rate(FS)
+
+        self.contador = 0
         
     def _wl_callback(self, msg):
         self.wl = msg.data
@@ -79,6 +96,11 @@ class LocalisationNode():
         self.y = 0.0
         self.q = 0.0
         return EmptyResponse()
+    
+    def _aruco_callback(self, msg):
+        self.arucos_id = msg.data
+        if self.aruco_id not in self.M:
+            self.M.append(self.arucos_id)
     
     # def _EKF(self, M, miu_k, sigma_k, z_i, R_k):
 
@@ -106,10 +128,10 @@ class LocalisationNode():
 
             # TODO: Cambiar el robot_pose por lo nuevo (Es con el resultado del filtro?)
             # Pose parameters
-            self.model_pose.pose.position.x = self.robot_pose[0][0]
-            self.model_pose.pose.position.y = self.robot_pose[1][0]
+            self.model_pose.pose.position.x = self.miu[0][0]
+            self.model_pose.pose.position.y = self.miu[1][0]
             # Quaternion
-            qRota = tf.transformations.quaternion_from_euler(0, 0, self.robot_pose[2][0])
+            qRota = tf.transformations.quaternion_from_euler(0, 0, self.miu[2][0])
             self.model_pose.pose.orientation = Quaternion(qRota[0], qRota[1], qRota[2], qRota[3])
             # Pose covariance
             self.model_pose.covariance[:] = np.ravel(self.pose_cov)
@@ -122,7 +144,7 @@ class LocalisationNode():
 
             # Publish the transform
             t = TransformStamped()
-            self.tb.sendTransform([self.robot_pose[0][0], self.robot_pose[1][0], 0], qRota, rospy.Time.now(), "base_link", "map")
+            self.tb.sendTransform([self.miu[0][0], self.miu[1][0], 0], qRota, rospy.Time.now(), "base_link", "map")
 
             # Publish the joint state
             if (self.wl is not None) and (self.wr is not None):
@@ -155,7 +177,7 @@ class LocalisationNode():
 
                 # ----- Prediction step -----
 
-                # TODO: Preguntar si los cáluclos se hacen con miu o con s
+                # TODO: Preguntar si los caluclos se hacen con miu o con s
                 # Best estimation update
                 displacement_vector = np.array([[dd * np.cos(miu_k_1[2][0])],
                                                 [dd * np.sin(miu_k_1[2][0])],
@@ -172,16 +194,19 @@ class LocalisationNode():
                                           [np.sin(miu_k_1[2][0]), np.sin(miu_k_1[2][0])],
                                           [2/L, -2/L]])
                 
-                # TODO: Preguntar si esl ruido de la covarianza también se agrega en el modelo real
+                # TODO: Preguntar si esl ruido de la covarianza tambien se agrega en el modelo real
                 # Noise (tunned according to the test of mini challenge 1)
                 sigma_j = np.array([[Kr*np.abs(self.wr), 0],
                                     [0, Kl*np.abs(self.wl)]]) 
                 
                 # Pose covariance matrix Q_k
                 Q = np.dot(np.dot(j_w, sigma_j), j_w.T)
+                #Q =(j_w * sigma_j) * j_w.T
 
                 # Update covariance matrix
                 self.sigma = np.dot(np.dot(H, self.sigma), H.T) + Q
+                
+                #self.sigma = (H * self.sigma * H.T) + Q
                 
                 # Assignment of covariance values
                 self.pose_cov[0][0] = self.sigma[0][0]
@@ -196,36 +221,74 @@ class LocalisationNode():
 
                 self.s = self.miu + H*(s_k_1 - miu_k_1)
 
-                # TODO: Implementar función para el filtro de Kalman
+                # TODO: Implementar funcion para el filtro de Kalman
                 # ----- Correction step -----
+                for M in self.M:
+                    if M in self.m:
+                        print("Mx",self.m[M]['x'])
+                        print("My",self.m[M]['y'])
 
-                if self.z in self.m:
+                        print("miuX",self.miu[0][0])
+                        print("miuY",self.miu[1][0])
 
-                    dx = self.m[0][0] - self.miu[0][0]
-                    dy = self.m[1][0] - self.miu[1][0]
-                    p = dx**2 + dy**2
+                        dx = self.m[M]['x'] - self.miu[0][0]
+                        dy = self.m[M]['y'] - self.miu[1][0]
+                        p = dx**2 + dy**2
 
-                    z_rho = np.sqrt((dx)**2 + (dy)**2)
-                    z_alpha = np.arctan2(dy, dx) - self.miu[2][0]
+                        z_rho = np.sqrt((dx)**2 + (dy)**2)
+                        z_alpha = np.arctan2(dy, dx) - self.miu[2][0]
 
-                    ez = np.array([[z_rho], [z_alpha]])
 
-                    G = np.array([[-(dx/np.sqrt(p)), -(dy/np.sqrt(p)), 0.0], 
-                                  [dy/p, -(dx/p), -1.0]])
-                    
-                    # TODO: Preugntar de dónde sale la R = ?
-                    
-                    Z = np.dot(np.dot(G, self.sigma), G.T) + R
 
-                    K = np.dot(np.dot(self.sigma, G.T), np.linalg.inv(Z))
+                        #print(b1)
+                        #print(b2)
 
-                    z = ez + G*(self.s - self.miu)
+                        #print(z_alpha)
+                        #print(z_rho)
 
-                    self.miu = self.miu + K*(z - ez)
+                        
 
-                    I = np.eye(3)
-                    
-                    self.sigma = (I - np.dot(K, G))*self.sigma
+                        #print(z_alpha)
+                        #print(z_rho)
+
+                        ez = np.array([[z_rho], [z_alpha]])
+
+
+                        #print(ez.shape)
+                        #print(p)
+
+                        G = np.array([[-(dx/np.sqrt(p)), -(dy/np.sqrt(p)), 0.0], 
+                                    [dy/p, -(dx/p), -1.0]])
+                        
+                        # TODO: Preugntar de donde sale la R = ?
+                        RR = np.array([[0.1, 0],[0, 0.02]])
+                        Z = np.dot(np.dot(G, self.sigma), G.T) + RR
+                        # Z = np.dot(G, self.sigma)*(G.T) + RR
+                        # print("sigma", self.sigma)
+                        # print("Sigma det",np.linalg.det(self.sigma))
+                        # print("G.T", G.T)
+                        # print("G", G)
+                        # print("Z", Z)
+                        #if np.linalg.det(Z) > 0:
+                        K = np.dot(np.dot(self.sigma, G.T), np.linalg.inv(Z))
+
+                        # K = self.sigma*(G.T)*np.linalg.inv(Z)
+
+                        z = ez + np.dot(G, (self.s - self.miu))
+
+                        #z = ez + G*(self.s - self.miu)
+                        # print(self.miu.shape)
+                        # print(z.shape)
+                        # print(ez.shape)
+                        # print(K.shape)
+
+                        self.miu = self.miu + np.dot(K,(z - ez))
+                        #self.miu = self.miu + K*(z - ez)
+
+                        I = np.eye(H.shape[0])
+                        
+                        self.sigma = np.dot((I - np.dot(K, G)),self.sigma)
+                        #self.sigma = (I - (K*G)*self.sigma)
                     
 
 

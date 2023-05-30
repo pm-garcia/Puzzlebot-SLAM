@@ -13,7 +13,7 @@ class Bug0():
 
         # Initialize node
         rospy.init_node("Bug0")
-        self.rate = rospy.Rate(10)
+        self.rate = rospy.Rate(90)
         
         # Target point
         self.tx = tx
@@ -72,6 +72,9 @@ class Bug0():
         self.yaw = t[2]
         self.cx = position.x
         self.cy = position.y
+        # print("X del robot", self.cx)
+        # print("Y del robot", self.cy)
+        # print("Orientacion del robot", self.yaw)
     
     # Sensor (LIDAR) callback
     def _scan_callback(self, msg):
@@ -105,6 +108,10 @@ class Bug0():
     def go_to_goal(self):
         
         self.angle_to_goal = np.arctan2(self.ty-self.cy, self.tx-self.cx) - self.yaw
+        if self.angle_to_goal > np.pi:
+            self.angle_to_goal -= 2 * np.pi
+        elif self.angle_to_goal < -np.pi:
+            self.angle_to_goal += 2 * np.pi
         angle_limit = 0.1
         
         self.distance_to_goal = np.sqrt((self.ty - self.cy)**2+(self.tx - self.cx)**2)
@@ -141,6 +148,7 @@ class Bug0():
                 self.cmd.angular.z = self.MAX_ANGULAR_VELOCITY
 
             angle_error = abs(self.regions['fleft'] - self.regions['lback']) * self.K4
+            
             if angle_error < self.MIN_VELOCITY:
                 self.cmd.linear.x = self.MAX_VELOCITY - angle_error
             if angle_error >= self.MIN_VELOCITY:
@@ -153,7 +161,7 @@ class Bug0():
             return True
 
     def reached_goal(self):
-        if self.distance_to_goal < .20:
+        if self.distance_to_goal < .1:
             return True
         else:
             return False
@@ -177,6 +185,8 @@ class Bug0():
                          self.state = "go-to-goal"
                 elif self.state == "goal-reached":
                     self._end_callback()
+
+            self.rate.sleep()
 
                     
 if __name__ == "__main__":
