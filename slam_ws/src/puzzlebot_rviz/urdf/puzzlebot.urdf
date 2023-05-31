@@ -69,6 +69,20 @@
 		</visual>
 	</link>
 
+<!-- camera_frame_optical -->
+<link name="camera_frame_optical">
+    <!-- Definicion visual y geometrica del marco hijo -->
+    <!-- ... -->
+</link>
+
+<joint name="base_link_to_camera_frame" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_frame_optical"/>
+    <origin xyz="0.1 0 0.048" rpy="${-pi/2} 0 ${-pi/2}"/>  <!-- Ajusta los valores de posicion y orientacion segun tus necesidades -->
+</joint>
+
+     
+
 </robot>
 
 
