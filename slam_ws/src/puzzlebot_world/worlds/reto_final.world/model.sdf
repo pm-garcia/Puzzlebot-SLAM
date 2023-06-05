@@ -1,0 +1,16 @@
+<?xml version='1.0'?>
+<sdf version='1.6'>
+  <model name='reto_final.world'>
+    <pose frame=''>0 0 0 0 -0 0</pose>
+    <static>1</static>
+  </model>
+
+<material>
+  <script>
+    <uri>model://home/yeidi/Descargas/</uri>
+    <name>mi_textura</name>
+  </script>
+  <diffuse>wall.jpg</diffuse>
+</material>
+
+</sdf>
