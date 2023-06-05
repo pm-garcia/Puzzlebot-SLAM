@@ -9,10 +9,7 @@ def load_map_from_yaml(file_path):
     return map_data
 
 
-    # Aquí puedes implementar tu algoritmo A* para planificar la ruta en el mapa
-    # Utiliza los datos del mapa (por ejemplo, la matriz de ocupación) para generar la ruta deseada
-    # El parámetro 'start' representa la posición de inicio y 'goal' la posición de destino
-    
+
     # Ejemplo: Ruta directa desde el inicio hasta el objetivo
     path = [start, goal]
     return path

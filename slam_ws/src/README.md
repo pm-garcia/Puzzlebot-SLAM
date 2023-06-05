@@ -11,73 +11,62 @@
 </picture>
 
 ---
+# TE3003B Week 6: Robust Localisation.
+---
 
-# Gazebo Simulator
-
-* This package contains the gazebo simulation files to run the robot model and the track for the Manchester Robotics Challenge.
-
-## Installation
-
-If you haven´t use the PuzzleBot simulation robot, it is important that you install the packages necessary for ROS Control. Please use the following command:
-
- `sudo apt-get install ros-$DISTRO$-ros-control ros-$DISTRO$-ros-controllers`
-
-Download the folders 
-  * puzzlebot_control
-  * puzzlebot_gazebo
-  * puzzlebot_world
-
-into your folder `src`  in your usual catkin workspace (usually `~/catkin_ws/src`) , or create a new catkin workspace with the folders.  
-
-<img src="https://user-images.githubusercontent.com/67285979/187089591-091a9058-dcc1-4abe-80fa-c4405f29bcea.png" alt="drawing" width="400"/>
-
-* If you have already the folders in your catkin workspace Merge the folder, and replace the duplicated files. 
-
-## Simulator documentation
-
- In order to execute this simulator run the following steps:
-
-* Execute the following lines of code
-  ```
-  catkin_make
-  source devel/setup.bash
-  roslaunch puzzlebot_world puzzlebot_simple_world.launch
-  ```
-* Open a new terminal and run 
-  ```
-  source devel/setup.bash
-  ```
-Now you can use this terminal to interact with the simulator. Keep in mind that this instruction needs to be executed whenever you open a new terminal. Alternatively, you can add it to your .bashrc file. 
-
-## Interface with Gazebo Simulator
-
-* Install the teleop package using:
-```
-sudo apt get install ros $DISTRO$ teleop twist keyboard
-```
-* Run
-
-```
-rosrun teleop_twist_keyboard teleop_twist_keyboard.py
-```
-* Input in the terminal the commands to move the robot (use the keyboard as explained in the terminal instructions)
-* See how the robot traverses accordingly the environment.
-
-
-
-## Quick Troubleshooting
-- ### Gazebo is not closing properly?
-  If you closed the gazebo window, and terminal is still hanging. Use ` Ctl + C`  to kill the process. 
+ This week will introduce concepts of Map based localisation and Kalman Filter.
+ 
+  ## Session 1
+  * Midterm Challenge Results
+  * Introduction to Map Based Localisation
   
-- ### Gazebo is not opening after quiting program?
-  If the launcher does not display the interface, or the interface shuts down by itself during launching, the gazebo server and client process may be still stuck. Kill both with the following commands. 
-  
-  `killall gzserver` 
-  `killall gzclient` 
+  ## Session 2
+* Bayes Filter.
+* Kalman Filter
+*	Kalman Filter for map-based localisation (2D).
+*	Camera based localisation for mobile robots.
+    -	Aruco markers
+    -	Visual localisation of mobile robots using Aruco markers
+    -	Kalman filter for map-based localisation in 3D. Kalman filter estimation by combining visual localization with encoder information.
 
-- #### I have a different problem.
+  ## Final Challenge
+    * This challenge consists in autonomously exploring an unknown environment using the Puzzlebot.
 
-You can also raise a Git Issue if you have question, issues or doubts. 
+---
 
-## Extra references
-- Gazebo GUI - https://classic.gazebosim.org/tutorials?cat=guided_b&tut=guided_b2
+
+
+### Useful Links: 
+
+#### EKF Localisation
+  * [ArUco Marker Detection](https://docs.opencv.org/4.x/d5/dae/tutorial_aruco_detection.html)
+  * [ArUco Marker Module](https://docs.opencv.org/4.x/d9/d6d/tutorial_table_of_content_aruco.html)
+  * [Camera Calibration](https://docs.opencv.org/4.x/d9/d0c/group__calib3d.html)
+  * [Camera Calibration example](https://docs.opencv.org/4.x/dc/dbb/tutorial_py_calibration.html)
+  * [Camera Models](https://web.stanford.edu/class/cs231a/course_notes/01-camera-models.pdf)
+  * [Visual localisation of mobile robots](https://core.ac.uk/download/pdf/82180464.pdf)
+  * [EKF Localisation](https://ieeexplore.ieee.org/document/9843066)
+  * [EKF Localisation WSN](https://www.sciencedirect.com/science/article/pii/S2352864820302601)
+  * [Guaranteed Slam An Interval Approach / Thesis.](https://pure.manchester.ac.uk/ws/portalfiles/portal/60828137/FULL_TEXT.PDF)
+  * [Guaranteed SLAM an Interval Approach](https://www.sciencedirect.com/science/article/abs/pii/S0921889017303986?via%3Dihub)
+  * [Automatic generation and detection of highly reliable ﬁducial markers under occlusion](https://www.researchgate.net/publication/260251570_Automatic_generation_and_detection_of_highly_reliable_fiducial_markers_under_occlusion)
+  * [Interval Extended Kalman Filter—Application to Underwater Localization and Control](https://www.ensta-bretagne.fr/jaulin/paper_iekf.pdf)
+
+
+
+#### Dynamical Systems
+  * [Nonlinear Systems](https://books.google.fr/books/about/Nonlinear_Systems.html?id=t_d1QgAACAAJ&redir_esc=y)
+  * [Nonlinear & Adaptive Systems](https://digital-library.theiet.org/content/books/ce/pbce084e)
+  * [Nonlinear Dynamical Systems](https://books.google.fr/books/about/Nonlinear_Dynamical_Systems.html?id=FPlQAAAAMAAJ&redir_esc=y)
+  * [Linear Systems Primer](https://wp.kntu.ac.ir/hrahmanei/Adv-Control-Books/A-Linear-Systems-Primer.pdf)
+  * [Lectures on Nonlinear Systems](https://web.mit.edu/nsl/www/videos/lectures.html)
+  * [Applied Nonlinear Control](https://books.google.fr/books/about/Applied_Nonlinear_Control.html?id=cwpRAAAAMAAJ&redir_esc=y)
+
+#### ROS
+ * [ROS Installation](http://wiki.ros.org/noetic/Installation/Ubuntu)
+ * [ROS book](https://www.cse.sc.edu/~jokane/agitr/)
+ * [ROS Packages](http://wiki.ros.org/ROS/Tutorials/CreatingPackage)
+ * [ROS Workspace](http://wiki.ros.org/catkin/Tutorials/create_a_workspace)
+ * [Publisher and Subscribers](http://wiki.ros.org/ROS/Tutorials/WritingPublisherSubscriber%28python%29)
+ * [Roslaunch](http://wiki.ros.org/roslaunch)
+ ---
