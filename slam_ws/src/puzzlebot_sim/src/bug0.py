@@ -79,21 +79,8 @@ class Bug0():
     # Sensor (LIDAR) callback
     def _scan_callback(self, msg):
 
-        # index = [i for i, x in enumerate(msg.ranges) if x != float('inf')]
-        # print(index)
-
-        # Front: 0:52 y 1097:1146 - 101
-        # FRight: 955:1065 - 110
-        # FLeft: 95:196 - 101
-        # Right: 788:922 - 134
-        # Left: 225:358 - 133
-        # Back: 497:651 - 154
-        # RBack: 645:768 - 123 
-        # LBack: 382:502 - 120
-
         front_index = msg.ranges[0:71] + msg.ranges[1066:1146]
         
-        # Min or mean?
         self.regions = {
             "front":    min(min(front_index), 10),
             "fleft":    min(min(msg.ranges[72:213]), 10),

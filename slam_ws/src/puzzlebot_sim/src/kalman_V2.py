@@ -11,28 +11,11 @@ from fiducial_msgs.msg import FiducialTransformArray
 import tf.transformations as tftr
 import csv
 
-z = {}
 wl, wr = 0.0, 0.0
 r, l = 0.05, 0.18
 fiducials = None
-FS = 90
-T = 1.0/FS
-ruta_archivo = "datos.csv"
 
-# def generar_csv(z_i_lectura, z_pred_calculada, Miu_antigua, Miu_corregida, Error):
-#     # Abrir el archivo en modo escritura
-#     with open(ruta_archivo, 'a') as archivo_csv:
-#         # Crear el objeto escritor CSV
-#          # Crear el objeto escritor CSV
-#         escritor_csv = csv.writer(archivo_csv)
-
-#         # Escribir los encabezados de las columnas
-#         escritor_csv.writerow(["z_i_lectura", "z_pred_calculada", "Miu_antigua", "Miu_corregida", "Error"])
-
-#         # Escribir los datos en las columnas correspondientes
-#         escritor_csv.writerow([z_i_lectura, z_pred_calculada, Miu_antigua, Miu_corregida, Error])
-
-#     print("Archivo CSV generado exitosamente.")
+# --- Callbacks ---
 
 def wl_callback(msg):
     global wl
@@ -42,34 +25,21 @@ def wr_callback(msg):
     global wr
     wr = msg.data
 
-# def aruco_callback(msg):
-#         global z
-#         aruco_data = msg.data
-        
-#         if len(aruco_data) > 0:
-#             z[aruco_data[2]] = np.array([aruco_data[0], aruco_data[1]])
-#         elif len(aruco_data) == 0:
-#             z = {}
-
 def arucos_callback(fiducial_array):
     global fiducials
     fiducials = fiducial_array.transforms
 
-    
-    # for fiducial in fiducials:
-    #     marker_id = fiducial.fiducial_id
-    #     translation = fiducial.transform.translation
-    #     rotation = fiducial.transform.rotation
+# --- Main functions ---
 
-def kalman(M, miu, sigma, u, z, Q, R, dt):
-    global fiducials
+def kalman(M, miu, sigma, u, fiducials, Q, R, dt):
+
     miu_pred = motion_model(miu, u, dt)
-    miu_antigua = motion_model(miu, u, dt)
+    # miu_antigua = motion_model(miu, u, dt)
     H = motion_model_jacobian(miu, u, dt)
     Q = motion_Q(miu, dt)
     sigma_pred = np.dot(np.dot(H, sigma), H.T) + Q
+    
     #print("Miu antigua", miu_pred)
-
     #return miu_pred, sigma_pred
 
     if fiducials is not None:
@@ -79,11 +49,10 @@ def kalman(M, miu, sigma, u, z, Q, R, dt):
             translation = fiducial.transform.translation
             rotation = fiducial.transform.rotation
             distance = np.sqrt((translation.x)**2 + (translation.y)**2 + (translation.z)**2)
-            if marker_id in M and distance < 5:
-            
-                print("Translation: ", translation)
-                print("rotation: ", rotation)
 
+            if marker_id in M and distance < 5:
+                # print("Translation: ", translation)
+                # print("rotation: ", rotation)
 
                 m = np.array([[M[marker_id][0]], [M[marker_id][1]]])
 
@@ -91,39 +60,25 @@ def kalman(M, miu, sigma, u, z, Q, R, dt):
                 z_pred = observation_model(m, miu_pred)
 
                 G = observation_model_jacobian(m, miu_pred)
-                
                 Z = np.dot(np.dot(G, sigma_pred), G.T) + R
-                
                 K = np.dot(np.dot(sigma_pred, G.T), np.linalg.inv(Z))
-                print(K.shape)
-                print("z_i_lectura", z_i)
-                print("z_pred_calculada", z_pred)
-                print("Miu_antigua", miu_pred)
+                # print(K.shape)
+                # print("z_i_lectura", z_i)
+                # print("z_pred_calculada", z_pred)
+                # print("Miu_antigua", miu_pred)
+
                 error = z_i - z_pred
                 error[1][0] = np.arctan2(np.sin(error[1][0]), np.cos(error[1][0]))
-                #Normalizar error
-                print("Error", error)
+                # print("Error", error)
+
                 miu_pred += np.dot(K, (error))
                 print("Miu_corregida", miu_pred)
                 I = np.eye(len(miu_pred))
                 sigma_pred = np.dot((I - np.dot(K, G)), sigma_pred)
-                #generar_csv(z_i, z_pred, miu_antigua, miu_pred, error)
-                # while True:
-                #      pass
+
         fiducials = None
 
-                
-
-    
     return miu_pred, sigma_pred
-
-# def wrapped_angle(angle):
-#     if angle > np.pi:
-#         angle -= 2 * np.pi
-#     elif angle < -np.pi:
-#         angle += 2 * np.pi
-
-#     return angle
 
 def motion_model(miu, u, dt):
     x, y, th = np.squeeze(miu)
@@ -132,9 +87,7 @@ def motion_model(miu, u, dt):
     x_new = x + dt * v * np.cos(th) 
     y_new = y + dt * v * np.sin(th) 
     th_new = th + dt * w 
-
     th_new = np.arctan2(np.sin(th_new), np.cos(th_new))
-    #th_new = np.fmod(th_new + np.pi, 2 * np.pi) - np.pi
 
     return np.array([[x_new], [y_new], [th_new]])
 
@@ -149,7 +102,6 @@ def motion_model_jacobian(miu, u, dt):
     return H
 
 def motion_Q(miu, dt):
-
     x, y, th = np.squeeze(miu)
 
     j_w = 0.5*r*dt * np.array([[np.cos(th), np.cos(th)],
@@ -157,7 +109,7 @@ def motion_Q(miu, dt):
                               [2/l, -2/l]])
     # TODO: Ajustar valores
     kr = 0.725
-    kl = 0.715#89
+    kl = 0.715 # 89
     sigma_j = np.array([[kr*np.abs(wr), 0],
                         [0, kl*np.abs(wl)]])
     
@@ -168,54 +120,36 @@ def motion_Q(miu, dt):
 def observation_model(m, miu_pred):
     x, y, th = np.squeeze(miu_pred)
     lx, ly = np.squeeze(m)
-
-    print("DistanciaX calculo", lx - x)
-    print("DistanciaZ calculo", ly - y)
+    # print("DistanciaX calculo", lx - x)
+    # print("DistanciaZ calculo", ly - y)
 
     rho = np.sqrt((lx - x)**2 + (ly - y)**2)
     alpha = np.arctan2(ly - y, lx - x) - th
-
     alpha = np.arctan2(np.sin(alpha), np.cos(alpha))
-
-    print("alpha medido", alpha)
-
-    #alpha = np.fmod(alpha + np.pi, 2 * np.pi) - np.pi
-    #Checar angulo normalizado
+    # print("alpha medido", alpha)
     #print("Z calculada", np.array([[rho], [alpha]]))
+
     return np.array([[rho], [alpha]])
 
 def observation_lectures(translation, rotation, miu_pred):
     x, y, th = np.squeeze(miu_pred)
 
-    #rho = np.sqrt((translation.z)**2 + (translation.x)**2)
     listener = tf.TransformListener()
     listener.waitForTransform("base_link", "camera_frame_optical", rospy.Time(), rospy.Duration(4.0))
     (trans, rot) = listener.lookupTransform("base_link", "camera_frame_optical", rospy.Time())
-    x_camera = translation.x
-    y_camera = translation.y
-    z_camera = translation.z
-    translation_camera = np.array([x_camera, y_camera, z_camera])
+    translation_camera = np.array([translation.x, translation.y, translation.z])
+
     # Matriz de transformacion desde el marco de la camara al marco del robot
     transform_camera_to_robot = tftr.compose_matrix(translate=trans, angles=tftr.euler_from_quaternion(rot))
-
     # Transformar el vector de traslacion y rotacion al marco del robot
     translation_robot = np.dot(transform_camera_to_robot[:3, :3], translation_camera) + transform_camera_to_robot[:3, 3]
-    #rotation_robot = tftr.quaternion_multiply(rot, rotation)
+    # rotation_robot = tftr.quaternion_multiply(rot, rotation)
 
-    # translation.x = translation.x * -1
-    # print("DistanciaX camara", translation.x)
-    # print("DistanciaZ camara", translation.z)
     rho = np.sqrt((translation_robot[0])**2 + (translation_robot[1])**2 + (translation_robot[2])**2)
     alpha = np.arctan2(translation_robot[1], translation_robot[0]) #- th
-    #alpha = np.arccos(translation.z/translation.x)
-    #Intentar corregir el sistema de coordenadas
-    # alpha = rotation.x
-    # alpha = angle
     alpha = np.arctan2(np.sin(alpha), np.cos(alpha))
 
-    print("alpha lectura", alpha)
-
-    #alpha = np.fmod(alpha + np.pi, 2 * np.pi) - np.pi
+    # print("alpha lectura", alpha)
     #print("Z real", np.array([[rho], [alpha]]))
 
     return np.array([[rho], [alpha]])   
@@ -242,12 +176,6 @@ def main():
     twist_cov = np.zeros((6, 6)) # Twist covariance for Odometry message
 
     # Landmark position
-    # TODO: Cambiar esto?
-    # m1 = np.array([[1], [2]]) # 18
-    # m2 = np.array([[2], [5]]) # 12
-    # m3 = np.array([[-1], [9]]robot_sta) # 5
-    # M = [m1] 
-
     # M = {18:(1, 4),
     #      12:(7, 10),
     #      5:(4, -2),
@@ -260,19 +188,11 @@ def main():
          42: (1, 9),
          43: (1, -1)}
 
-
-    
-    # Assuming following conditions remain constant
-
     Q = np.zeros((3, 3)) # Motion model covariance matrix
     
     R = np.array([[0.002, 0], 
                   [0, 0.002]]) # Observation model covariance matrix
     
-    # Assumed measurement at each step k using the LiDAR
-    # z_i = np.array([[4.87], [0.8]])
-    # z = []
-
     f1 = r/l # To save some calculations
     f2 = 0.5*r
 
@@ -285,7 +205,6 @@ def main():
 
     while not rospy.is_shutdown():
 
-        
         # Robot pose
         x, y, th = np.squeeze(miu)
         modelPose = PoseWithCovariance()
@@ -340,11 +259,8 @@ def main():
         dt = current_time - last_time
         last_time = current_time       
 
-
         miu, sigma = kalman(M, miu, sigma, u, z, Q, R, dt)
         
-
-
         # Sleep
         rate.sleep()
 

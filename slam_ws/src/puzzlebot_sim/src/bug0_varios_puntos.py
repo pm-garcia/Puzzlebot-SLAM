@@ -79,22 +79,8 @@ class Bug0_varios_puntos():
     
     # Sensor (LIDAR) callback
     def _scan_callback(self, msg):
-
-        # index = [i for i, x in enumerate(msg.ranges) if x != float('inf')]
-        # print(index)
-
-        # Front: 0:52 y 1097:1146 - 101
-        # FRight: 955:1065 - 110
-        # FLeft: 95:196 - 101
-        # Right: 788:922 - 134
-        # Left: 225:358 - 133
-        # Back: 497:651 - 154
-        # RBack: 645:768 - 123 
-        # LBack: 382:502 - 120
-
         front_index = msg.ranges[0:71] + msg.ranges[1066:1146]
         
-        # Min or mean?
         self.regions = {
             "front":    min(min(front_index), 10),
             "fleft":    min(min(msg.ranges[72:213]), 10),
@@ -105,45 +91,7 @@ class Bug0_varios_puntos():
             "right":    min(min(msg.ranges[782:923]), 10),
             "fright":   min(min(msg.ranges[924:1065]), 10),
         }
-        # try:
-        #     # Esperar a que la transformacion este disponible
-        #     self.listener.waitForTransform("map", "base_link", rospy.Time(), rospy.Duration(1.0))
-
-        #     # Realizar la transformacion del marco del robot (base_link) al marco del mapa (map)
-        #     transformed_scan = self.listener.transformLaserScan("map", msg)
-
-        #     # Obtener los datos transformados del sensor LIDAR
-        #     transformed_ranges = transformed_scan.ranges
-
-        #     # index = [i for i, x in enumerate(transformed_ranges) if x != float('inf')]
-        #     # print(index)
-
-        #     # Front: 0:52 y 1097:1146 - 101
-        #     # FRight: 955:1065 - 110
-        #     # FLeft: 95:196 - 101
-        #     # Right: 788:922 - 134
-        #     # Left: 225:358 - 133
-        #     # Back: 497:651 - 154
-        #     # RBack: 645:768 - 123 
-        #     # LBack: 382:502 - 120
-
-        #     front_index = transformed_ranges[0:71] + transformed_ranges[1066:1146]
-            
-        #     # Min or mean?
-        #     self.regions = {
-        #         "front":    min(min(front_index), 10),
-        #         "fleft":    min(min(transformed_ranges[72:213]), 10),
-        #         "left":     min(min(transformed_ranges[214:355]), 10),
-        #         "lback":    min(min(transformed_ranges[356:497]), 10),
-        #         "back":     min(min(transformed_ranges[498:639]), 10),
-        #         "rback":    min(min(transformed_ranges[640:781]), 10),
-        #         "right":    min(min(transformed_ranges[782:923]), 10),
-        #         "fright":   min(min(transformed_ranges[924:1065]), 10),
-        #     }
-
-        # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-        #     rospy.logerr("Error durante la transformacion del sensor LIDAR: %s" % str(e))
-
+    
     def go_to_goal(self):
         
         self.angle_to_goal = np.arctan2(self.ty-self.cy, self.tx-self.cx) - self.yaw

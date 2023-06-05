@@ -248,13 +248,6 @@ class Bug2():
                 #     print("Goal reached!")
                 #     break
                 
-
-
-                    
-                    
-
-                    
-
 if __name__ == "__main__":
     try: 
         bug2 = Bug2(float(sys.argv[1]), float(sys.argv[2]))
