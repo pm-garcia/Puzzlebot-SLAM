@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <launch>
   <!-- <node name="ekf_localisation" pkg="puzzlebot_sim" type="kalman_V2.py" output="screen" /> -->
   <!-- <node name="bug0" pkg="puzzlebot_sim" type="bug0.py" output="screen" /> -->
   <node name="republish_node" pkg="image_transport" type="republish" args="raw in:=/camera/image_raw compressed out:=camera/image" output="screen" />
 
-  <include file="$(find puzzlebot_world)/launch/puzzlebot_arucos_world.launch" />
+  <include file="$(find puzzlebot_world)/launch/puzzlebot_retofinal_world.launch" /> 
+  <!-- <include file="$(find puzzlebot_world)/launch/puzzlebot_arucos_world.launch" /> -->
   <include file="$(find aruco_detect)/launch/aruco_detect.launch" />
 </launch>
 
